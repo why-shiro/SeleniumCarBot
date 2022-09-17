@@ -14,43 +14,27 @@ from selenium.webdriver.support.wait import WebDriverWait
 class SearchAgent:
     driver = None
     loadingURL = None
+    sucess = 0
     targetList = []
 
     def __init__(self, loadingURL: str):
+        print('Initing!')
         self.loadingURL = loadingURL
-        self.initDriver()
+        options = Options()
+        options.page_load_strategy = 'eager'
+        disableInfoBar = ['enable-automation']
+        options.add_experimental_option('excludeSwitches', disableInfoBar)
+        options.add_argument("--disable-extensions")
+        self.driver = webdriver.Chrome(options=options)
+        self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+            "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                         'Chrome/83.0.4103.53 Safari/537.36'})
+        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        self.delete_cache()
+        self.driver.get(self.loadingURL)
+        self.checkCookie()
         self.driver.get(loadingURL)
         self.checkCookie()
-
-    def initDriver(self):
-        if self.driver != None:
-            self.driver.quit()
-            options = Options()
-            options.page_load_strategy = 'eager'
-
-            ua = UserAgent()
-            userAgent = ua.chrome
-
-            disableInfoBar = ['enable-automation']
-            options.add_experimental_option('excludeSwitches', disableInfoBar)
-            options.add_argument(f'user-agent={userAgent}')
-            self.driver = webdriver.Chrome(options=options)
-            self.delete_cache()
-            self.driver.get(self.loadingURL)
-
-        else:
-            options = Options()
-            options.page_load_strategy = 'eager'
-
-            ua = UserAgent()
-            userAgent = ua.chrome
-
-            disableInfoBar = ['enable-automation']
-            options.add_experimental_option('excludeSwitches', disableInfoBar)
-            options.add_argument(f'user-agent={userAgent}')
-            self.driver = webdriver.Chrome(options=options)
-            self.delete_cache()
-            self.driver.get(self.loadingURL)
 
     def delete_cache(self):
         self.driver.execute_script("window.open('');")
@@ -96,7 +80,7 @@ class SearchAgent:
             print("I did not find any cookie :>")
 
     def checkPageSize(self) -> int:
-        time.sleep(2)
+        time.sleep(10)
         pageElement = self.driver.find_element(By.CLASS_NAME, 'pagination')
         links = list(pageElement.find_elements(By.TAG_NAME, "li"))
         pageSize = int(
@@ -137,9 +121,7 @@ class SearchAgent:
     def sendMails(self):
         print("Sending Mails!")
         page = 1
-        for y in range(1, self.checkPageSize() + 1):
-            self.initDriver()
-            time.sleep(60)
+        for y in range(1, 51):
             self.eraseCache()
             self.loadSiteOnNewTab(f"https://suchen.mobile.de/fahrzeuge/search.html?adLimitation=ONLY_FSBO_ADS"
                                   f"&damageUnrepaired=NO_DAMAGE_UNREPAIRED&isSearchRequest=true&makeModelVariant1"
@@ -149,6 +131,8 @@ class SearchAgent:
             self.checkCookie()
             self.listCars()
             for x in self.targetList:
+                ratio = (self.sucess / page)
+                print(f'Success rate : {ratio}*100')
                 self.driver.execute_script("window.localStorage.clear()")
                 self.driver.delete_all_cookies()
                 time.sleep(2)
@@ -157,6 +141,7 @@ class SearchAgent:
                 self.checkCookie()
                 try:
                     self.writeMail()
+                    self.sucess += 1
                 except:
                     print("The car has been closed :<")
                 self.returnMainTab()
