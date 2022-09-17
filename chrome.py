@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
 from selenium.webdriver.support.wait import WebDriverWait
 
+import random
 
 class SearchAgent:
     driver = None
@@ -135,6 +136,7 @@ class SearchAgent:
                 print(f'Success rate : {ratio}*100')
                 self.driver.execute_script("window.localStorage.clear()")
                 self.driver.delete_all_cookies()
+                self.driver.set_window_size(random.randint(512, 1024), random.randint(512, 1920))
                 time.sleep(2)
                 print(f'Entering page : {page}')
                 self.loadSiteOnNewTab(x)
@@ -147,3 +149,4 @@ class SearchAgent:
                 self.returnMainTab()
                 page += 1
             self.returnMainTab()
+            self.driver.close()
