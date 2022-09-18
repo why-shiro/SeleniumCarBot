@@ -139,6 +139,7 @@ class SearchAgent:
                 self.driver.set_window_size(random.randint(512, 1024), random.randint(512, 1920))
                 time.sleep(2)
                 print(f'Entering page : {page}')
+                print(x)
                 self.loadSiteOnNewTab(x)
                 self.checkCookie()
                 try:
@@ -149,4 +150,3 @@ class SearchAgent:
                 self.returnMainTab()
                 page += 1
             self.returnMainTab()
-            self.driver.close()
