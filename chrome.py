@@ -13,11 +13,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 import random
 
 
-
 #
 # Bunu implemente edelim, hem menü için hem temiz görünüm açısından çok daha güzel durucak
 #
-def log(message, logLevel = 0):
+def log(message, logLevel=0):
     match logLevel:
         case 0:
             print("[DEBUG] " + message)
@@ -51,7 +50,10 @@ class SearchAgent:
         # EXTENSION INIT
         print("Initializing Extensions")
         # options.add_extension('C:\\Users\\redacted\\Desktop\\CRX3-Creator-master\\Browsec.crx')
-        options.add_extension('Buster.crx')
+        try:
+            options.add_extension('Buster.crx')
+        except:
+            print("Extension setup has failed! Please check extension file is installed!")
         print("Extension setup completed.")
         # EXTENSION END
 
@@ -67,7 +69,6 @@ class SearchAgent:
         self.driver.get(loadingURL)
         self.check_captcha()
         self.checkCookie()
-
 
     #
     # Test edemedim hiç captchaya rastlayamadım
@@ -148,6 +149,19 @@ class SearchAgent:
 
         print(f'Filtered : {len(self.targetList)}')
 
+    def betaTest(self):
+        testList = []
+        self.driver.get("https://suchen.mobile.de/fahrzeuge/search.html?adLimitation=ONLY_FSBO_ADS&damageUnrepaired"
+                        "=NO_DAMAGE_UNREPAIRED&isSearchRequest=true&makeModelVariant1.makeId=1900&makeModelVariant1"
+                        ".modelId=9&pageNumber=12")
+        self.driver.implicitly_wait(10)
+        time.sleep(10)
+        self.check_captcha()
+        elements = list(self.driver.find_elements(By.XPATH, '//a[@data-listing-id]'))
+        log(f'Finded elements: {len(elements)}', 1)
+        for x in elements:
+            print(x)
+        time.sleep(600)
     def writeMail(self):
         msgbox = WebDriverWait(self.driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//*[@id=\"vip-contact-form\"]/div/div[1]/textarea")))
@@ -163,7 +177,6 @@ class SearchAgent:
         email = self.driver.find_element(By.XPATH, "//*[@id=\"contact-type-email-section\"]/div/div/input")
         email.clear()
         email.send_keys("yigityilmaz1923@hotmail.com")
-
 
     # Success hesaplamasını değiştirdim daha güzel bir sonuç veriyor artık
     # Ama sanki page hesaplaması bir garip olmuş tam verimli çalışmıyor gibi
