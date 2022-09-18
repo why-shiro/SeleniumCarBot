@@ -12,10 +12,31 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 import random
 
+
+
+#
+# Bunu implemente edelim, hem menü için hem temiz görünüm açısından çok daha güzel durucak
+#
+def log(message, logLevel = 0):
+    match logLevel:
+        case 0:
+            print("[DEBUG] " + message)
+            return
+        case 1:
+            print("[INFO] " + message)
+        case 2:
+            print("[WARNING] " + message)
+        case 3:
+            print("[ERROR/SEVERE] " + message)
+        case default:
+            print(message)
+
+
 class SearchAgent:
     driver = None
     loadingURL = None
     sucess = 0
+    totalcars = 0
     targetList = []
 
     def __init__(self, loadingURL: str):
@@ -25,7 +46,15 @@ class SearchAgent:
         options.page_load_strategy = 'eager'
         disableInfoBar = ['enable-automation']
         options.add_experimental_option('excludeSwitches', disableInfoBar)
-        options.add_argument("--disable-extensions")
+        # options.add_argument("--disable-extensions")
+
+        # EXTENSION INIT
+        print("Initializing Extensions")
+        # options.add_extension('C:\\Users\\redacted\\Desktop\\CRX3-Creator-master\\Browsec.crx')
+        options.add_extension('Buster.crx')
+        print("Extension setup completed.")
+        # EXTENSION END
+
         self.driver = webdriver.Chrome(options=options)
         self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
             "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -33,9 +62,25 @@ class SearchAgent:
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self.delete_cache()
         self.driver.get(self.loadingURL)
+        self.check_captcha()
         self.checkCookie()
         self.driver.get(loadingURL)
+        self.check_captcha()
         self.checkCookie()
+
+
+    #
+    # Test edemedim hiç captchaya rastlayamadım
+    #
+    def check_captcha(self):
+        self.driver.switch_to.default_content()
+        try:
+            WebDriverWait(self.driver, 10).until(
+                EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR, "//iframe[@title='recaptcha challenge']")))
+            WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[@id='solver-button']"))).click()
+        except:
+            log("There is no captcha, moving on.")
 
     def delete_cache(self):
         self.driver.execute_script("window.open('');")
@@ -119,26 +164,30 @@ class SearchAgent:
         email.clear()
         email.send_keys("yigityilmaz1923@hotmail.com")
 
+
+    # Success hesaplamasını değiştirdim daha güzel bir sonuç veriyor artık
+    # Ama sanki page hesaplaması bir garip olmuş tam verimli çalışmıyor gibi
     def sendMails(self):
         print("Sending Mails!")
         page = 1
         for y in range(1, 51):
+            log("Entering page #" + page)
             self.eraseCache()
             self.loadSiteOnNewTab(f"https://suchen.mobile.de/fahrzeuge/search.html?adLimitation=ONLY_FSBO_ADS"
                                   f"&damageUnrepaired=NO_DAMAGE_UNREPAIRED&isSearchRequest=true&makeModelVariant1"
                                   f".makeId=1900&makeModelVariant1.modelId=9&pageNumber="
                                   f"{y}&ref=srpPreviousPage&scopeId=C&sortOption.sortBy=relevance&refId=23bbd1ef-2fa1"
                                   f"-4123-ab94-2d4af888c843")
+            self.check_captcha()
             self.checkCookie()
             self.listCars()
             for x in self.targetList:
-                ratio = (self.sucess / page)
-                print(f'Success rate : {ratio}*100')
+                self.totalcars += 1
                 self.driver.execute_script("window.localStorage.clear()")
                 self.driver.delete_all_cookies()
                 self.driver.set_window_size(random.randint(512, 1024), random.randint(512, 1920))
                 time.sleep(2)
-                print(f'Entering page : {page}')
+                print(f'Entering car #{page}')
                 print(x)
                 self.loadSiteOnNewTab(x)
                 self.checkCookie()
@@ -147,6 +196,8 @@ class SearchAgent:
                     self.sucess += 1
                 except:
                     print("The car has been closed :<")
+                ratio = (self.sucess / self.totalcars) * 100
+                print(f'Success rate : {ratio}%')
                 self.returnMainTab()
                 page += 1
             self.returnMainTab()
