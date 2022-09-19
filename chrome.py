@@ -2,6 +2,7 @@ import sys
 import time
 
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -47,6 +48,9 @@ class SearchAgent:
         options.add_experimental_option('excludeSwitches', disableInfoBar)
         # options.add_argument("--disable-extensions")
 
+        ua = UserAgent()
+        rua = ua.chrome
+
         # EXTENSION INIT
         print("Initializing Extensions")
         # options.add_extension('C:\\Users\\redacted\\Desktop\\CRX3-Creator-master\\Browsec.crx')
@@ -59,8 +63,8 @@ class SearchAgent:
 
         self.driver = webdriver.Chrome(options=options)
         self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
-            "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                         'Chrome/83.0.4103.53 Safari/537.36'})
+            "userAgent": 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 '
+                         'Safari/537.36'})
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self.delete_cache()
         self.driver.get(self.loadingURL)
@@ -72,16 +76,109 @@ class SearchAgent:
 
     #
     # Test edemedim hiç captchaya rastlayamadım
+    # Made by: KardasLand
+    # This is not working! Google reCaptcha finds this is automation control!
+    # This code will be changed 2Captcha API Later
     #
     def check_captcha(self):
-        self.driver.switch_to.default_content()
-        try:
-            WebDriverWait(self.driver, 10).until(
-                EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR, "//iframe[@title='recaptcha challenge']")))
-            WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[@id='solver-button']"))).click()
-        except:
+        # self.driver.switch_to.default_content()
+        # try:
+        time.sleep(15)
+        # if len(self.driver.find_elements(By.CSS_SELECTOR, "iframe[name^='a-'][src^='https://www.recaptcha.net/recaptcha/api2/anchor?']")) > 0:
+        if len(self.driver.find_elements(By.ID, "sec-cpt-if")) > 0:
+            log("Captcha detected.", 1)
+
+            ids = self.driver.find_elements(By.XPATH, '//*[@id]')
+
+            log("Main IDS")
+            for ii in ids:
+                # print ii.tag_name
+                print(str(ii.get_attribute('id')))  # id name as string
+
+            # allelements = list(self.driver.find_elements(By.XPATH, './/*'))
+            # for x in allelements:
+            #    log(str(x.id))
+
+            frame = self.driver.find_element(By.ID, "sec-cpt-if")
+            self.driver.switch_to.frame(frame)
+            ids = self.driver.find_elements(By.XPATH, '//*[@id]')
+            log("Main iFrame IDS")
+            for ii in ids:
+                # print ii.tag_name
+                print(str(ii.get_attribute('id')))  # id name as string
+
+            inner_frame = self.driver.find_element(By.XPATH, '//*[@id="g-recaptcha"]/div/div/iframe')
+            print(str(inner_frame.get_attribute('src')))
+
+            self.driver.switch_to.frame(inner_frame)
+
+            ids = self.driver.find_elements(By.XPATH, '//*[@id]')
+            log("Inner iFrame IDS")
+            for ii in ids:
+                # print ii.tag_name
+                print(str(ii.get_attribute('id')))  # id name as string
+
+            # time.sleep(500)
+            # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it(
+            #    (By.CSS_SELECTOR, "iframe[name^='a-'][src^='https://www.google.com/recaptcha/api2/anchor?']")))
+
+            captchaButton = self.driver.find_element(By.XPATH, '//*[@id="recaptcha-anchor"]')
+            self.driver.execute_script("arguments[0].click()", captchaButton)
+
+            time.sleep(2)
+
+            self.driver.switch_to.default_content()
+
+            frame = self.driver.find_element(By.ID, "sec-cpt-if")
+            self.driver.switch_to.frame(frame)
+
+            ids = self.driver.find_elements(By.XPATH, '//*[@title]')
+            captchaWindow = None
+            log("MainWindow IDS")
+            for ii in ids:
+                # print ii.tag_name
+                print(str(ii.get_attribute('title')))  # id name as string
+                if (ii.get_attribute('title').__eq__("recaptcha challenge expires in two minutes")):
+                    captchaWindow = ii
+
+            self.driver.switch_to.frame(captchaWindow)
+
+            time.sleep(2)
+
+            ids = self.driver.find_elements(By.XPATH, '//*[@class]')
+            log("CaptchaFrame Classes")
+            for ii in ids:
+                # print ii.tag_name
+                print(str(ii.get_attribute('class')))  # id name as string
+
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.TAB * 2)
+            time.sleep(4)
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
+
+            # shadow = Shadow(self.driver) element = shadow.get_shadow_element(self.driver.find_element(
+            # By.CLASS_NAME, "button-holder.help-button-holder"), "button#solver-button")
+
+            # log(str(element.title))
+
+            time.sleep(2000)
+
+            # def expand_shadow_element(driver, element):
+            #    shadow_root = driver.execute_script('return arguments[0].shadowRoot', element)
+            #    return shadow_root
+
+            # outer = expand_shadow_element(self.driver, self.driver.find_element(By.CLASS_NAME, "button-holder.help-button-holder"))
+            # inner = outer.find_element(By.ID, "solver-button")
+            # inner.click()
+
+            # shadow_root = self.driver.find_element(By.CLASS_NAME, 'button-holder.help-button-holder').shadow_root
+            # element_in_shadow_root = shadow_root.find_element(By.ID, 'solver-button')
+            # self.driver.execute_script("arguments[0].click()", element_in_shadow_root)
+        else:
             log("There is no captcha, moving on.")
+        # except:
+        #    log("There is no captcha, moving on.")
 
     def delete_cache(self):
         self.driver.execute_script("window.open('');")
@@ -150,10 +247,13 @@ class SearchAgent:
         print(f'Filtered : {len(self.targetList)}')
 
     def betaTest(self):
+        self.driver.execute_script("window.localStorage.clear()")
         testList = []
-        self.driver.get("https://suchen.mobile.de/fahrzeuge/search.html?adLimitation=ONLY_FSBO_ADS&damageUnrepaired"
-                        "=NO_DAMAGE_UNREPAIRED&isSearchRequest=true&makeModelVariant1.makeId=1900&makeModelVariant1"
-                        ".modelId=9&pageNumber=12")
+        self.driver.get(f"https://suchen.mobile.de/fahrzeuge/search.html?adLimitation=ONLY_FSBO_ADS"
+                                  f"&damageUnrepaired=NO_DAMAGE_UNREPAIRED&isSearchRequest=true&makeModelVariant1"
+                                  f".makeId=1900&makeModelVariant1.modelId=9&pageNumber="
+                                  f"{1}&ref=srpPreviousPage&scopeId=C&sortOption.sortBy=relevance&refId=23bbd1ef-2fa1"
+                                  f"-4123-ab94-2d4af888c843")
         self.driver.implicitly_wait(10)
         time.sleep(10)
         self.check_captcha()
@@ -162,6 +262,7 @@ class SearchAgent:
         for x in elements:
             print(x)
         time.sleep(600)
+
     def writeMail(self):
         msgbox = WebDriverWait(self.driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//*[@id=\"vip-contact-form\"]/div/div[1]/textarea")))
