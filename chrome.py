@@ -38,6 +38,12 @@ class SearchAgent:
     sucess = 0
     totalcars = 0
     targetList = []
+    emailList = ["yigityilmaz1926@gmail.com", "yigityilmaz1924@hotmail.com", "authme19234@gmail.com",
+                 "verycoolemail1244@hotmail.com", "nextaslevelmail@hotmail.com"]
+    nameList = ["Ahmad", "Carl", "Shenyang", "Mehmet", "Felix"]
+    surnameList = ["Müller", "Schmidt", "Schneider", "Fischer", "Weber"]
+
+
 
     def __init__(self, loadingURL: str):
         print('Initing!')
@@ -49,7 +55,6 @@ class SearchAgent:
         # options.add_argument("--disable-extensions")
 
         ua = UserAgent()
-        rua = ua.chrome
 
         # EXTENSION INIT
         print("Initializing Extensions")
@@ -77,7 +82,7 @@ class SearchAgent:
     def check_captcha(self):
         # self.driver.switch_to.default_content()
         # try:
-        time.sleep(5) # Changed 15 to 5!
+        time.sleep(5)  # Changed 15 to 5!
         if len(self.driver.find_elements(By.ID, "sec-cpt-if")) > 0:
             log("Captcha detected.", 1)
 
@@ -242,15 +247,29 @@ class SearchAgent:
         msgbox.clear()
         print("Passed!")
         time.sleep(2)
-        msgbox.send_keys("a")
+        msgbox.send_keys("Sehr geehrte Damen und Herren,\n\n"
+                         "ich interessiere mich für Ihr Angebot.\n"
+                         "Bitte kontaktieren Sie mich.\n\n"
+                         "Mit freundlichen Grüßen")
         time.sleep(2)
         nameTxtBox = self.driver.find_element(By.XPATH, "//*[@id=\"vip-contact-form\"]/div/div[2]/div[1]/div/div/input")
         nameTxtBox.clear()
-        nameTxtBox.send_keys("b")
-        time.sleep(2)
+        name = str(random.choice(self.nameList) + " " + random.choice(self.surnameList))
+        nameTxtBox.send_keys(name)
+        time.sleep(1)
         email = self.driver.find_element(By.XPATH, "//*[@id=\"contact-type-email-section\"]/div/div/input")
         email.clear()
-        email.send_keys("yigityilmaz1923@hotmail.com")
+        email.send_keys(random.choice(self.emailList))
+        button = self.driver.find_element(By.XPATH,"//*[@id=\"vip-contact-form-submit\"]")
+        button.click()
+
+        time.sleep(2)
+
+        try:
+            success = self.driver.find_element(By.XPATH,"//*[@id=\"success-content\"]/div")
+            print(success)
+        except:
+            print("Couldn't find any success!")
 
     # Success hesaplamasını değiştirdim daha güzel bir sonuç veriyor artık
     # Ama sanki page hesaplaması bir garip olmuş tam verimli çalışmıyor gibi
@@ -285,7 +304,7 @@ class SearchAgent:
                 end = time.time()
                 ratio = (self.sucess / self.totalcars) * 100
                 print(f'Success rate : {ratio}%')
-                print(f'Taken time : {end-start}')
+                print(f'Taken time : {end - start}')
                 self.returnMainTab()
                 page += 1
             self.returnMainTab()
