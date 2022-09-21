@@ -62,10 +62,7 @@ class SearchAgent:
         # EXTENSION END
 
         self.driver = webdriver.Chrome(options=options)
-        self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
-            "userAgent": 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 '
-                         'Safari/537.36'})
-        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        # self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self.delete_cache()
         self.driver.get(self.loadingURL)
         self.check_captcha()
@@ -129,40 +126,45 @@ class SearchAgent:
 
             self.driver.switch_to.default_content()
 
-            frame = self.driver.find_element(By.ID, "sec-cpt-if")
-            self.driver.switch_to.frame(frame)
+            try:
+                frame = self.driver.find_element(By.ID, "sec-cpt-if")
+                self.driver.switch_to.frame(frame)
 
-            ids = self.driver.find_elements(By.XPATH, '//*[@title]')
-            captchaWindow = None
-            log("MainWindow IDS")
-            for ii in ids:
-                # print ii.tag_name
-                print(str(ii.get_attribute('title')))  # id name as string
-                if (ii.get_attribute('title').__eq__("recaptcha challenge expires in two minutes")):
-                    captchaWindow = ii
+                ids = self.driver.find_elements(By.XPATH, '//*[@title]')
+                captchaWindow = None
+                log("MainWindow IDS")
+                for ii in ids:
+                    # print ii.tag_name
+                    print(str(ii.get_attribute('title')))  # id name as string
+                    if (ii.get_attribute('title').__eq__("recaptcha challenge expires in two minutes")):
+                        captchaWindow = ii
 
-            self.driver.switch_to.frame(captchaWindow)
+                self.driver.switch_to.frame(captchaWindow)
 
-            time.sleep(2)
+                time.sleep(2)
 
-            ids = self.driver.find_elements(By.XPATH, '//*[@class]')
-            log("CaptchaFrame Classes")
-            for ii in ids:
-                # print ii.tag_name
-                print(str(ii.get_attribute('class')))  # id name as string
+                ids = self.driver.find_elements(By.XPATH, '//*[@class]')
+                log("CaptchaFrame Classes")
+                for ii in ids:
+                    # print ii.tag_name
+                    print(str(ii.get_attribute('class')))  # id name as string
 
-            actions = ActionChains(self.driver)
-            actions.send_keys(Keys.TAB * 2)
-            time.sleep(4)
-            actions.send_keys(Keys.ENTER)
-            actions.perform()
+                self.driver.set_window_size(random.randint(512, 1024), random.randint(512, 1920))
+
+                actions = ActionChains(self.driver)
+                actions.send_keys(Keys.TAB * 2)
+                time.sleep(4)
+                actions.send_keys(Keys.ENTER)
+                actions.perform()
+            except:
+                print("No button needed or error")
 
             # shadow = Shadow(self.driver) element = shadow.get_shadow_element(self.driver.find_element(
             # By.CLASS_NAME, "button-holder.help-button-holder"), "button#solver-button")
 
             # log(str(element.title))
 
-            time.sleep(2000)
+            time.sleep(5)
 
             # def expand_shadow_element(driver, element):
             #    shadow_root = driver.execute_script('return arguments[0].shadowRoot', element)
@@ -247,21 +249,14 @@ class SearchAgent:
         print(f'Filtered : {len(self.targetList)}')
 
     def betaTest(self):
-        self.driver.execute_script("window.localStorage.clear()")
-        testList = []
-        self.driver.get(f"https://suchen.mobile.de/fahrzeuge/search.html?adLimitation=ONLY_FSBO_ADS"
-                                  f"&damageUnrepaired=NO_DAMAGE_UNREPAIRED&isSearchRequest=true&makeModelVariant1"
-                                  f".makeId=1900&makeModelVariant1.modelId=9&pageNumber="
-                                  f"{1}&ref=srpPreviousPage&scopeId=C&sortOption.sortBy=relevance&refId=23bbd1ef-2fa1"
-                                  f"-4123-ab94-2d4af888c843")
+        self.targetList = []
         self.driver.implicitly_wait(10)
-        time.sleep(10)
+        time.sleep(2)
         self.check_captcha()
         elements = list(self.driver.find_elements(By.XPATH, '//a[@data-listing-id]'))
         log(f'Finded elements: {len(elements)}', 1)
         for x in elements:
-            print(x)
-        time.sleep(600)
+            self.targetList.append(x.get_attribute("href"))
 
     def writeMail(self):
         msgbox = WebDriverWait(self.driver, 20).until(
@@ -285,16 +280,14 @@ class SearchAgent:
         print("Sending Mails!")
         page = 1
         for y in range(1, 51):
-            log("Entering page #" + page)
             self.eraseCache()
             self.loadSiteOnNewTab(f"https://suchen.mobile.de/fahrzeuge/search.html?adLimitation=ONLY_FSBO_ADS"
                                   f"&damageUnrepaired=NO_DAMAGE_UNREPAIRED&isSearchRequest=true&makeModelVariant1"
-                                  f".makeId=1900&makeModelVariant1.modelId=9&pageNumber="
-                                  f"{y}&ref=srpPreviousPage&scopeId=C&sortOption.sortBy=relevance&refId=23bbd1ef-2fa1"
-                                  f"-4123-ab94-2d4af888c843")
+                                  f".modelId=9&pageNumber={y}&ref=srpNextPage&scopeId=C&sortOption.sortBy=relevance"
+                                  f"&refId=948c1a55-66e9-66fc-33d1-e9020be58646")
             self.check_captcha()
             self.checkCookie()
-            self.listCars()
+            self.betaTest()
             for x in self.targetList:
                 self.totalcars += 1
                 self.driver.execute_script("window.localStorage.clear()")
