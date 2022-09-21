@@ -2,7 +2,7 @@ import sys
 import time
 
 from selenium import webdriver
-from selenium.common import NoSuchElementException
+from selenium.common import NoSuchElementException, WebDriverException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -67,9 +67,6 @@ class SearchAgent:
         self.driver.get(self.loadingURL)
         self.check_captcha()
         self.checkCookie()
-        self.driver.get(loadingURL)
-        self.check_captcha()
-        self.checkCookie()
 
     #
     # Test edemedim hiç captchaya rastlayamadım
@@ -80,8 +77,7 @@ class SearchAgent:
     def check_captcha(self):
         # self.driver.switch_to.default_content()
         # try:
-        time.sleep(15)
-        # if len(self.driver.find_elements(By.CSS_SELECTOR, "iframe[name^='a-'][src^='https://www.recaptcha.net/recaptcha/api2/anchor?']")) > 0:
+        time.sleep(5) # Changed 15 to 5!
         if len(self.driver.find_elements(By.ID, "sec-cpt-if")) > 0:
             log("Captcha detected.", 1)
 
@@ -91,10 +87,6 @@ class SearchAgent:
             for ii in ids:
                 # print ii.tag_name
                 print(str(ii.get_attribute('id')))  # id name as string
-
-            # allelements = list(self.driver.find_elements(By.XPATH, './/*'))
-            # for x in allelements:
-            #    log(str(x.id))
 
             frame = self.driver.find_element(By.ID, "sec-cpt-if")
             self.driver.switch_to.frame(frame)
@@ -116,8 +108,6 @@ class SearchAgent:
                 print(str(ii.get_attribute('id')))  # id name as string
 
             # time.sleep(500)
-            # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it(
-            #    (By.CSS_SELECTOR, "iframe[name^='a-'][src^='https://www.google.com/recaptcha/api2/anchor?']")))
 
             captchaButton = self.driver.find_element(By.XPATH, '//*[@id="recaptcha-anchor"]')
             self.driver.execute_script("arguments[0].click()", captchaButton)
@@ -159,40 +149,21 @@ class SearchAgent:
             except:
                 print("No button needed or error")
 
-            # shadow = Shadow(self.driver) element = shadow.get_shadow_element(self.driver.find_element(
-            # By.CLASS_NAME, "button-holder.help-button-holder"), "button#solver-button")
-
-            # log(str(element.title))
-
-            time.sleep(5)
-
-            # def expand_shadow_element(driver, element):
-            #    shadow_root = driver.execute_script('return arguments[0].shadowRoot', element)
-            #    return shadow_root
-
-            # outer = expand_shadow_element(self.driver, self.driver.find_element(By.CLASS_NAME, "button-holder.help-button-holder"))
-            # inner = outer.find_element(By.ID, "solver-button")
-            # inner.click()
-
-            # shadow_root = self.driver.find_element(By.CLASS_NAME, 'button-holder.help-button-holder').shadow_root
-            # element_in_shadow_root = shadow_root.find_element(By.ID, 'solver-button')
-            # self.driver.execute_script("arguments[0].click()", element_in_shadow_root)
+            time.sleep(2)
         else:
             log("There is no captcha, moving on.")
-        # except:
-        #    log("There is no captcha, moving on.")
 
     def delete_cache(self):
         self.driver.execute_script("window.open('');")
-        time.sleep(2)
+        time.sleep(1)
         self.driver.switch_to.window(self.driver.window_handles[-1])
-        time.sleep(2)
+        time.sleep(1)
         self.driver.get('chrome://settings/clearBrowserData')  # for old chromedriver versions use cleardriverData
-        time.sleep(2)
+        time.sleep(1)
         actions = ActionChains(self.driver)
         actions.send_keys(Keys.TAB * 3 + Keys.DOWN * 3)  # send right combination
         actions.perform()
-        time.sleep(2)
+        time.sleep(1)
         actions = ActionChains(self.driver)
         actions.send_keys(Keys.TAB * 4 + Keys.ENTER)  # confirm
         actions.perform()
@@ -208,12 +179,15 @@ class SearchAgent:
 
     def loadSiteOnNewTab(self, url: str):
         self.driver.execute_script("window.open('');")
-        time.sleep(2)
+        time.sleep(1.5)
         self.driver.switch_to.window(self.driver.window_handles[-1])
-        self.driver.get(url)
+        try:
+            self.driver.get(url)
+        except WebDriverException:
+            print("Page Down! Moving inte next page.")
 
     def returnMainTab(self):
-        time.sleep(2)
+        time.sleep(1.5)
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[0])
 
@@ -235,6 +209,9 @@ class SearchAgent:
         print(f'Active pages: {pageSize}')
         return pageSize
 
+    """
+    Veteran Code! I was nice to work with you :<
+    
     def listCars(self):
         self.targetList = []
         self.driver.implicitly_wait(10)
@@ -247,6 +224,7 @@ class SearchAgent:
                 self.targetList.append(x.get_attribute("href"))
 
         print(f'Filtered : {len(self.targetList)}')
+    """
 
     def betaTest(self):
         self.targetList = []
@@ -259,7 +237,7 @@ class SearchAgent:
             self.targetList.append(x.get_attribute("href"))
 
     def writeMail(self):
-        msgbox = WebDriverWait(self.driver, 20).until(
+        msgbox = WebDriverWait(self.driver, 5).until(
             EC.element_to_be_clickable((By.XPATH, "//*[@id=\"vip-contact-form\"]/div/div[1]/textarea")))
         msgbox.clear()
         print("Passed!")
@@ -289,6 +267,7 @@ class SearchAgent:
             self.checkCookie()
             self.betaTest()
             for x in self.targetList:
+                start = time.time()
                 self.totalcars += 1
                 self.driver.execute_script("window.localStorage.clear()")
                 self.driver.delete_all_cookies()
@@ -303,8 +282,10 @@ class SearchAgent:
                     self.sucess += 1
                 except:
                     print("The car has been closed :<")
+                end = time.time()
                 ratio = (self.sucess / self.totalcars) * 100
                 print(f'Success rate : {ratio}%')
+                print(f'Taken time : {end-start}')
                 self.returnMainTab()
                 page += 1
             self.returnMainTab()
