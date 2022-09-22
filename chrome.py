@@ -271,6 +271,19 @@ class SearchAgent:
         except:
             print("Couldn't find any success!")
 
+    def sendMailToSpecific(self):
+        print("Testing!")
+        for i in range(1,6):
+            self.eraseCache()
+            self.loadSiteOnNewTab(
+                "https://suchen.mobile.de/fahrzeuge/details.html?id=352722115&lang=de&utm_source=DirectMail&utm_medium=textlink&utm_campaign=Recommend_DES")
+            self.check_captcha()
+            self.checkCookie()
+            self.writeMail()
+            self.returnMainTab()
+            time.sleep(10)
+
+
     # Success hesaplamasını değiştirdim daha güzel bir sonuç veriyor artık
     # Ama sanki page hesaplaması bir garip olmuş tam verimli çalışmıyor gibi
     def sendMails(self):
