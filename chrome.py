@@ -215,7 +215,7 @@ class SearchAgent:
         return pageSize
 
     """
-    Veteran Code! I was nice to work with you :<
+    Veteran Code! It was nice to work with you :<
     
     def listCars(self):
         self.targetList = []
