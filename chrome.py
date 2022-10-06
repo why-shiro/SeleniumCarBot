@@ -1,14 +1,12 @@
-import sys
 import time
 
 from selenium import webdriver
-from selenium.common import NoSuchElementException, WebDriverException
+from selenium.common import WebDriverException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
-from fake_useragent import UserAgent
 from selenium.webdriver.support.wait import WebDriverWait
 
 import random
@@ -43,8 +41,6 @@ class SearchAgent:
     nameList = ["Ahmad", "Carl", "Shenyang", "Mehmet", "Felix"]
     surnameList = ["Müller", "Schmidt", "Schneider", "Fischer", "Weber"]
 
-
-
     def __init__(self, loadingURL: str):
         print('Initing!')
         self.loadingURL = loadingURL
@@ -53,8 +49,6 @@ class SearchAgent:
         disableInfoBar = ['enable-automation']
         options.add_experimental_option('excludeSwitches', disableInfoBar)
         # options.add_argument("--disable-extensions")
-
-        ua = UserAgent()
 
         # EXTENSION INIT
         print("Initializing Extensions")
@@ -131,7 +125,7 @@ class SearchAgent:
                 for ii in ids:
                     # print ii.tag_name
                     print(str(ii.get_attribute('title')))  # id name as string
-                    if (ii.get_attribute('title').__eq__("recaptcha challenge expires in two minutes")):
+                    if ii.get_attribute('title').__eq__("recaptcha challenge expires in two minutes"):
                         captchaWindow = ii
 
                 self.driver.switch_to.frame(captchaWindow)
@@ -260,20 +254,20 @@ class SearchAgent:
         email = self.driver.find_element(By.XPATH, "//*[@id=\"contact-type-email-section\"]/div/div/input")
         email.clear()
         email.send_keys(random.choice(self.emailList))
-        #button = self.driver.find_element(By.XPATH,"//*[@id=\"vip-contact-form-submit\"]")
-        #button.click()
+        # button = self.driver.find_element(By.XPATH,"//*[@id=\"vip-contact-form-submit\"]")
+        # button.click()
 
         time.sleep(2)
 
         try:
-            success = self.driver.find_element(By.XPATH,"//*[@id=\"success-content\"]/div")
+            success = self.driver.find_element(By.XPATH, "//*[@id=\"success-content\"]/div")
             print(success)
         except:
             print("Couldn't find any success!")
 
     def sendMailToSpecific(self):
         print("Testing!")
-        for i in range(1,6):
+        for i in range(1, 6):
             self.eraseCache()
             self.loadSiteOnNewTab(
                 "https://suchen.mobile.de/fahrzeuge/details.html?id=352722115&lang=de&utm_source=DirectMail&utm_medium=textlink&utm_campaign=Recommend_DES")
@@ -282,7 +276,6 @@ class SearchAgent:
             self.writeMail()
             self.returnMainTab()
             time.sleep(10)
-
 
     # Success hesaplamasını değiştirdim daha güzel bir sonuç veriyor artık
     # Ama sanki page hesaplaması bir garip olmuş tam verimli çalışmıyor gibi
