@@ -189,7 +189,7 @@ class SearchAgent:
         try:
             self.driver.get(url)
         except WebDriverException:
-            print("Page Down! Moving inte next page.")
+            print("Page Down! Moving into next page.")
 
     def returnMainTab(self):
         time.sleep(1.5)
