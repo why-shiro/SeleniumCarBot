@@ -1,8 +1,7 @@
-import sys
 import time
 
 from selenium import webdriver
-from selenium.common import NoSuchElementException, WebDriverException
+from selenium.common import WebDriverException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -260,8 +259,8 @@ class SearchAgent:
         email = self.driver.find_element(By.XPATH, "//*[@id=\"contact-type-email-section\"]/div/div/input")
         email.clear()
         email.send_keys(random.choice(self.emailList))
-        button = self.driver.find_element(By.XPATH,"//*[@id=\"vip-contact-form-submit\"]")
-        button.click()
+        #button = self.driver.find_element(By.XPATH,"//*[@id=\"vip-contact-form-submit\"]")
+        #button.click()
 
         time.sleep(2)
 
